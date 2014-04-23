@@ -1,0 +1,118 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	    <meta http-equiv='Content-Type' content='text/html;charset=UTF-8'/>
+	       
+		<script src="resources/sap-ui-core.js"
+				id="sap-ui-bootstrap"
+				data-sap-ui-libs="sap.ui.commons"
+				data-sap-ui-theme="sap_bluecrystal">
+		</script>
+		<script src="Base64PDF.js"></script>		
+		<script>
+			jQuery.sap.declare("PDFViewer");
+			jQuery.sap.require("sap.ui.core.HTML");
+			
+			//Create the new Control and set the following properties up
+			//- PDFurl - used when loading a PDF indirectly via a URL path to the PDF Location
+			//- PDFBase64 - used when loading a PDF directly from a local BASE64 blob of data
+			//- PDFWidth and PDFHeight, the dimensions of the area to show the control
+			// For base64 we will use the following syntax
+			//<iframe src="data:application/pdf;base64,base64encodedpdf"></iframe>
+
+			sap.ui.core.Control.extend("PDFViewer", { 
+			metadata : {                              
+				properties : {
+					"PDFurl" : "string",
+					"PDFBase64" : "string",
+					"width" : {type: "sap.ui.core.CSSSize", defaultValue: "600px"},
+					"height" : {type: "sap.ui.core.CSSSize", defaultValue: "700px"}	        										
+				},
+				aggregations : {
+					_HTMLContainer: {type : "sap.ui.core.HTML", multiple : false, visibility: "hidden"},
+				}
+			},
+			
+			//Create the HTML control that we will to build our iFrame control inside
+			init : function(){
+				var oControl = this;
+				var oHTML;
+				
+				oHTML = new sap.ui.core.HTML({
+				});
+				
+				//Now embed the iFrame
+				var iframeID = this.sId + "iFrame";				
+				oHTML.setContent("<iframe id='"+ iframeID + "' width='100%' height='100%'></iframe>");
+				
+				this.setAggregation("_HTMLContainer", oHTML);
+			},
+
+			renderer : function(oRm, oControl) {
+				//Write out the control block for the control
+				oRm.write("<div");
+
+				oRm.writeControlData(oControl);
+				//Add a Class PDFViewer, in case styling wants to be applied
+				oRm.addClass("PDFViewer");
+				oRm.writeClasses();
+				
+				//Now write out the sizes				
+				oRm.addStyle("width", oControl.getWidth());
+				oRm.addStyle("height", oControl.getHeight());
+				oRm.writeStyles();
+
+				oRm.write(">");
+
+				oRm.renderControl(oControl.getAggregation("_HTMLContainer"));
+				
+				oRm.write("</div>");
+			}
+				
+			});
+						
+			//overwrite setter for the Set PDF URL
+			PDFViewer.prototype.setPDFurl = function (sVal) {
+				//Now get the iFrame element inside the 
+				var iframeID = this.sId + "iFrame";
+
+				//Now update the value and also set the source in the iFrame element
+				//With the URL to the PDF
+				if (sVal) {
+					this.setProperty("PDFurl", sVal, true);     
+
+					//Now set the iFrame src to the URL
+					jQuery.sap.byId(iframeID).attr('src', sVal)
+				}
+			};
+			
+			//overwrite setter for the Set PDF BASE64
+			PDFViewer.prototype.setPDFBase64 = function (sVal) {
+				//Now get the iFrame element inside the 
+				var iframeID = this.sId + "iFrame";
+
+				//Now update the value and also set the source in the iFrame element
+				//With the actual base64 PDF
+				if (sVal) {
+					this.setProperty("PDFBase64", sVal, true);    
+
+					//Now set the iFrame src to the BASE64 PDF data
+					var srcURL = "data:application/pdf;base64," + sVal;
+ 					jQuery.sap.byId(iframeID).attr('src', srcURL)
+
+				}
+			};
+			
+		</script>
+		<script>
+				sap.ui.localResources("pdfviewer2");
+				var view = sap.ui.view({id:"idviewer1", viewName:"pdfviewer2.viewer", type:sap.ui.core.mvc.ViewType.JS});
+				view.placeAt("content");
+		</script>
+
+	</head>
+	<body class="sapUiBody" role="application">
+		<div id="content"></div>
+	</body>
+</html>
